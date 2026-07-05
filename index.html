@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The King Collection — Collector's Dossier</title>
+<title>The King Collection — Collector's Corner</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/papaparse/5.4.1/papaparse.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=Newsreader:ital,wght@0,400;0,500;0,600;1,400&family=Courier+Prime:wght@400;700&display=swap');
@@ -198,6 +198,10 @@ h1.title em{font-style:italic; color:var(--blood); font-weight:500;}
 .stamp.other{color:#8c5b23;}
 .stamp.wish{color:var(--fade-ink); border-style:dashed;}
 .note-tag{font-family:'Courier Prime', monospace; font-size:10px; color:var(--fade-ink); padding-left:14px; margin-top:-4px;}
+.grade-tag{
+  font-family:'Courier Prime', monospace; font-size:10.5px; font-weight:700; letter-spacing:0.04em;
+  padding-left:14px; margin-top:-4px; text-transform:uppercase;
+}
 
 .cover-zone{margin-left:14px;}
 .cover-box{
@@ -309,25 +313,28 @@ footer a{color:var(--gold);}
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
     <h2>Connect your Google Sheet</h2>
-    <p>Publish your sheet as CSV, then paste the link below. This is saved in your browser only.</p>
+    <p>This is saved in your browser only — nothing is sent anywhere else.</p>
     <ol>
-      <li>In Google Sheets: <strong>File → Share → Publish to web</strong></li>
-      <li>Choose the correct sheet/tab, set format to <strong>CSV</strong>, click <strong>Publish</strong></li>
-      <li>Copy the link it gives you and paste it here</li>
+      <li>In Google Sheets: <strong>Share</strong> → set to "Anyone with the link" → <strong>Viewer</strong></li>
+      <li>Copy the sheet's normal address bar URL and paste it below</li>
+      <li>Type the name of the tab your data is on (bottom of the sheet — default is usually <code>Sheet1</code>)</li>
     </ol>
-    <div class="modal-error" id="modalError">Couldn't load that link. Make sure it's published as CSV and the sharing setting is "Anyone with the link can view."</div>
-    <input type="text" id="sheetUrlInput" placeholder="https://docs.google.com/spreadsheets/d/e/…/pub?output=csv">
+    <div class="modal-error" id="modalError">Couldn't load that sheet. Double-check sharing is set to "Anyone with the link" and the tab name is exactly right (case-sensitive).</div>
+    <input type="text" id="sheetUrlInput" placeholder="https://docs.google.com/spreadsheets/d/…/edit">
+    <input type="text" id="sheetTabInput" placeholder="Tab name (e.g. Sheet1)">
     <div class="modal-buttons">
       <button class="btn-secondary" id="modalCancel">Cancel</button>
       <button class="btn-secondary" id="modalClear">Use Starter Data</button>
       <button class="btn-primary" id="modalSave">Connect</button>
     </div>
+    <p style="margin-top:16px; font-size:12px;"><a href="#" id="advancedToggle" style="color:var(--fade-ink)">Have a published CSV link instead? Use that.</a></p>
+    <input type="text" id="csvUrlInput" placeholder="https://docs.google.com/spreadsheets/d/e/…/pub?output=csv" style="display:none;">
   </div>
 </div>
 
 <script>
 /* ---------- Starter data (used until a sheet is connected) ---------- */
-const DEFAULT_BOOKS = [{"id":"b000","title":"Carrie","isBachman":false,"year":1974,"haveFirst":false,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First Edition\" on CP","T39 on page 823"],"note":null,"coverUrl":null},{"id":"b001","title":"Salem's Lot","isBachman":false,"year":1975,"haveFirst":false,"haveClub":true,"havePaperback":false,"haveOther":false,"tellSigns":["\"First Edition\" on CP","Q37 on page 439"],"note":null,"coverUrl":null},{"id":"b002","title":"Rage","isBachman":true,"year":1977,"haveFirst":false,"haveClub":true,"havePaperback":false,"haveOther":false,"tellSigns":["\"First Signet Printing, September, 1977\" on CP","\"1 2 3 4 5 6 7 8 9\" on CP"],"note":null,"coverUrl":null},{"id":"b003","title":"The Shining","isBachman":false,"year":1977,"haveFirst":false,"haveClub":true,"havePaperback":false,"haveOther":false,"tellSigns":["\"First Edition\" on CP","R49 on page 447"],"note":null,"coverUrl":null},{"id":"b004","title":"Night Shift","isBachman":false,"year":1978,"haveFirst":false,"haveClub":true,"havePaperback":false,"haveOther":false,"tellSigns":["\"First Edition\" on CP","S52 on page 336"],"note":null,"coverUrl":null},{"id":"b005","title":"The Stand","isBachman":false,"year":1978,"haveFirst":false,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First Edition\" on CP","T39 on page 823"],"note":null,"coverUrl":null},{"id":"b006","title":"The Long Walk","isBachman":true,"year":1979,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First Signet Printing, July, 1979\" on CP","\"123456789\" on CP"],"note":null,"coverUrl":null},{"id":"b007","title":"The Dead Zone","isBachman":false,"year":1979,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First published in 1979 by the Viking Press\" on CP"],"note":null,"coverUrl":null},{"id":"b008","title":"Firestarter","isBachman":false,"year":1980,"haveFirst":false,"haveClub":true,"havePaperback":false,"haveOther":false,"tellSigns":["\"First published in 1980 by the Viking Press\" on CP"],"note":null,"coverUrl":null},{"id":"b009","title":"Roadwork","isBachman":true,"year":1981,"haveFirst":false,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"1 2 3 4 5 6 7 8 9\" on CP"],"note":null,"coverUrl":null},{"id":"b010","title":"Cujo","isBachman":false,"year":1981,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First published in 1981 by the Viking Press\" on CP"],"note":"2 copies","coverUrl":null},{"id":"b011","title":"Danse Macabre","isBachman":false,"year":1981,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["RRD281 on CP"],"note":null,"coverUrl":null},{"id":"b012","title":"The Running Man","isBachman":true,"year":1982,"haveFirst":false,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First Printing May 1982\" on CP","\"1 2 3 4 5 6 7 8 9\" on CP"],"note":null,"coverUrl":null},{"id":"b013","title":"The Dark Tower I: The Gunslinger","isBachman":false,"year":1982,"haveFirst":false,"haveClub":false,"havePaperback":true,"haveOther":false,"tellSigns":["\"FIRST EDITION\" on CP"],"note":null,"coverUrl":null},{"id":"b014","title":"Different Seasons","isBachman":false,"year":1982,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First published in 1982 by the Viking Press\" on CP"],"note":null,"coverUrl":null},{"id":"b015","title":"Cycle of the Werewolf","isBachman":false,"year":1983,"haveFirst":false,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["Later reprinted in trade paperback by Signet and combined with script","for Silver Bullet"],"note":null,"coverUrl":null},{"id":"b016","title":"Pet Sematary","isBachman":false,"year":1983,"haveFirst":false,"haveClub":true,"havePaperback":false,"haveOther":false,"tellSigns":["\"First Edition\" on CP","Y38 on page 374"],"note":null,"coverUrl":null},{"id":"b017","title":"Christine","isBachman":false,"year":1983,"haveFirst":false,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First published in 1983 by the Viking Press\" on CP"],"note":null,"coverUrl":null},{"id":"b018","title":"Thinner","isBachman":true,"year":1984,"haveFirst":false,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First Printing, November 1984\" on CP","\"1 2 3 4 5 6 7 8 9\" on CP"],"note":null,"coverUrl":null},{"id":"b019","title":"The Talisman","isBachman":false,"year":1984,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First published in 1984 by Viking Penguin, Inc.\" on CP"],"note":null,"coverUrl":null},{"id":"b020","title":"Skeleton Crew","isBachman":false,"year":1985,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"1 2 3 4 5 6 7 8 9 10\" on CP"],"note":null,"coverUrl":null},{"id":"b021","title":"IT","isBachman":false,"year":1986,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First published in 1986 by Viking Penguin, Inc.\" on CP"],"note":null,"coverUrl":null},{"id":"b022","title":"Misery","isBachman":false,"year":1987,"haveFirst":false,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First published in 1987 by Viking Penguin, Inc.\" on CP"],"note":null,"coverUrl":null},{"id":"b023","title":"The Eyes of the Dragon","isBachman":false,"year":1987,"haveFirst":false,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First published in 1987 by Viking Penguin, Inc.\" on CP"],"note":null,"coverUrl":null},{"id":"b024","title":"The Dark Tower II: The Drawing of the Three","isBachman":false,"year":1987,"haveFirst":false,"haveClub":false,"havePaperback":true,"haveOther":false,"tellSigns":["\"FIRST EDITION\" on CP"],"note":null,"coverUrl":null},{"id":"b025","title":"The Tommyknockers","isBachman":false,"year":1987,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"1 2 3 4 5 6 7 8 9 10\" on CP","\"Permissions to come\" on CP"],"note":null,"coverUrl":null},{"id":"b026","title":"The Dark Half","isBachman":false,"year":1989,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First published in 1989 by Viking Penguin\" on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b027","title":"Four Past Midnight","isBachman":false,"year":1990,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First published in 1990 by Viking Penguin\" on CP","\"10 9 8 7 6 5 4 3 2 1\" on CP"],"note":null,"coverUrl":null},{"id":"b028","title":"The Stand - Complete and Uncut","isBachman":false,"year":1990,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"FIRST TRADE EDITION\" on CP"],"note":null,"coverUrl":null},{"id":"b029","title":"The Dark Tower III: The Waste Lands","isBachman":false,"year":1991,"haveFirst":false,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"FIRST EDITION\" on CP"],"note":null,"coverUrl":null},{"id":"b030","title":"Needful Things","isBachman":false,"year":1991,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First published in 1991 by Viking Penguin\" on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b031","title":"Dolores Claiborne","isBachman":false,"year":1992,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First published in 1993 by Viking Penguin\u201d on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b032","title":"Gerald's Game","isBachman":false,"year":1992,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First published in 1992 by Viking Penguin\u201d on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b033","title":"Nightmares and Dreamscapes","isBachman":false,"year":1993,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First published in 1993 by Viking Penguin\u201d on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b034","title":"Insomnia","isBachman":false,"year":1994,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First published in 1994 by Viking Penguin\u201d on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b035","title":"Rose Madder","isBachman":false,"year":1995,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First published in 1995 by Viking Penguin\u201d on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b036","title":"The Green Mile","isBachman":false,"year":1996,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First Printing, month , 1996\" on CP","month = March (Part 1) through August (Part 6)","\"10 9 8 7 6 5 4 3 2 1\" on CP"],"note":"HC Full collected","coverUrl":null},{"id":"b037","title":"The Regulators","isBachman":true,"year":1996,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First Trade Printing, October 1996\" on CP","\"10 9 8 7 6 5 4 3 2 1\" on CP"],"note":null,"coverUrl":null},{"id":"b038","title":"Desperation","isBachman":false,"year":1996,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First published in 1996 by Viking Penguin\u201d\u201d on CP","\"10 9 8 7 6 5 4 3 2 1\" on CP"],"note":null,"coverUrl":null},{"id":"b039","title":"The Dark Tower IV: Wizard and Glass","isBachman":false,"year":1997,"haveFirst":false,"haveClub":true,"havePaperback":false,"haveOther":false,"tellSigns":["\"First Edition\" on CP"],"note":null,"coverUrl":null},{"id":"b040","title":"Bag of Bones","isBachman":false,"year":1998,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b041","title":"The Girl Who Loved Tom Gordon","isBachman":false,"year":1999,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":"2 copies","coverUrl":null},{"id":"b042","title":"Hearts in Atlantis","isBachman":false,"year":1999,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b043","title":"Dreamcatcher","isBachman":false,"year":2001,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b044","title":"Black House","isBachman":false,"year":2001,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First Trade Edition\" on CP","\"2 4 6 8 9 7 5 3\" on CP"],"note":null,"coverUrl":null},{"id":"b045","title":"From A Buick 8","isBachman":false,"year":2002,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\u201c1 3 5 7 9 10 8 6 4 2\u201d on CP"],"note":"2 copies","coverUrl":null},{"id":"b046","title":"Everything's Eventual: 14 Dark Tales","isBachman":false,"year":2002,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b047","title":"The Dark Tower V: The Wolves of the Calla","isBachman":false,"year":2003,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["FIRST TRADE EDITION on CP","\u201c1 3 5 7 9 10 8 6 4 2\u201d on CP"],"note":null,"coverUrl":null},{"id":"b048","title":"The Dark Tower VI: Song of Susannah","isBachman":false,"year":2004,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["FIRST TRADE EDITION on CP","\u201c1 3 5 7 9 10 8 6 4 2\u201d on CP"],"note":null,"coverUrl":null},{"id":"b049","title":"The Dark Tower VII: The Dark Tower","isBachman":false,"year":2004,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["FIRST TRADE EDITION on CP","\u201c1 3 5 7 9 10 8 6 4 2\u201d on CP"],"note":null,"coverUrl":null},{"id":"b050","title":"The Colorado Kid (Paperback)","isBachman":false,"year":2005,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["Header on page 159 says Grifter\u2019s Game instead of The Colorado Kid."],"note":null,"coverUrl":null},{"id":"b051","title":"Cell","isBachman":false,"year":2006,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\u201c1 3 5 7 9 10 8 6 4 2\u201d on CP"],"note":null,"coverUrl":null},{"id":"b052","title":"Lisey's Story","isBachman":false,"year":2006,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\u201c1 3 5 7 9 10 8 6 4 2\u201d on CP"],"note":null,"coverUrl":null},{"id":"b053","title":"Blaze","isBachman":true,"year":2007,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition June 2007","\u201c1 2 3 4 5 6 7 8 9 10\u201d on CP"],"note":null,"coverUrl":null},{"id":"b054","title":"Just After Sunset","isBachman":false,"year":2008,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition November 2008","\u201c1 3 5 7 9 10 8 6 4 2\u201d on CP"],"note":null,"coverUrl":null},{"id":"b055","title":"Duma Key","isBachman":false,"year":2008,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition January 2008","\u201c1 3 5 7 9 10 8 6 4 2\u201d on CP"],"note":null,"coverUrl":null},{"id":"b056","title":"Under the Dome","isBachman":false,"year":2009,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition November 2009","\u201c1 3 5 7 9 10 8 6 4 2\u201d on CP"],"note":null,"coverUrl":null},{"id":"b057","title":"Full Dark, No Stars","isBachman":false,"year":2010,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition November 2010","\u201c1 3 5 7 9 10 8 6 4 2\u201d on CP"],"note":null,"coverUrl":null},{"id":"b058","title":"Blockcade Billy","isBachman":false,"year":2010,"haveFirst":false,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Edition on CP"],"note":null,"coverUrl":null},{"id":"b059","title":"11/22/63","isBachman":false,"year":2011,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition November 2011","\u201c1 3 5 7 9 10 8 6 4 2\u201d on CP"],"note":null,"coverUrl":null},{"id":"b060","title":"The Dark Tower: The Wind Through the Keyhole","isBachman":false,"year":2012,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition April 2012","\u201c1 3 5 7 9 10 8 6 4 2\u201d on CP"],"note":null,"coverUrl":null},{"id":"b061","title":"Joyland (Paperback)","isBachman":false,"year":2013,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Hard Case Crime edition: June 2013 on CP","(later covers state #1 NY Times Bestseller! in a red band at the top)"],"note":null,"coverUrl":null},{"id":"b062","title":"Doctor Sleep","isBachman":false,"year":2013,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["I love you  First Scribner hardcover edition September 2013","\u201c1 3 5 7 9 10 8 6 4 2\u201d on CP"],"note":null,"coverUrl":null},{"id":"b063","title":"Revival","isBachman":false,"year":2014,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition: November 2014 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b064","title":"Mr. Mercedes","isBachman":false,"year":2014,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition: June 2014 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b065","title":"Finders Keepers","isBachman":false,"year":2015,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition: June 2015 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":"2 copies","coverUrl":null},{"id":"b066","title":"The Bazaar of Bad Dreams","isBachman":false,"year":2015,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition: November 2015 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b067","title":"End of Watch","isBachman":false,"year":2016,"haveFirst":false,"haveClub":true,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition: June 2016 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b068","title":"Gwendy's Button Box","isBachman":false,"year":2017,"haveFirst":false,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Edition on CP"],"note":null,"coverUrl":null},{"id":"b069","title":"Sleeping Beauties","isBachman":false,"year":2017,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition: November 2017 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b070","title":"The Outsider","isBachman":false,"year":2018,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition: May 2018 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b071","title":"Elevation","isBachman":false,"year":2018,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition October 2018 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b072","title":"The Institute","isBachman":false,"year":2019,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition September 2019 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b073","title":"If It Bleeds","isBachman":false,"year":2020,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition May 2020 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b074","title":"Later","isBachman":false,"year":2021,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Hard Case Crime edition: March 2021"],"note":null,"coverUrl":null},{"id":"b075","title":"Billy Summers","isBachman":false,"year":2021,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition August 2021 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b076","title":"Gwendy's Final Task","isBachman":false,"year":2022,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Edition on CP"],"note":null,"coverUrl":null},{"id":"b077","title":"Fairy Tale","isBachman":false,"year":2022,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition September 2022 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b078","title":"Holly","isBachman":false,"year":2023,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition September 2023 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b079","title":"You Like it Darker","isBachman":false,"year":2024,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition May 2024 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b080","title":"Never Flinch","isBachman":false,"year":2025,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["1 3 5 7 9 10 8 6 4 2"],"note":null,"coverUrl":null}];
+const DEFAULT_BOOKS = [{"id":"b000","title":"Carrie","isBachman":false,"year":1974,"firstCount":0,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"First Edition\" on CP","T39 on page 823"],"note":null,"coverUrl":null},{"id":"b001","title":"Salem's Lot","isBachman":false,"year":1975,"firstCount":0,"clubCount":1,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"First Edition\" on CP","Q37 on page 439"],"note":null,"coverUrl":null},{"id":"b002","title":"Rage","isBachman":true,"year":1977,"firstCount":0,"clubCount":1,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"First Signet Printing, September, 1977\" on CP","\"1 2 3 4 5 6 7 8 9\" on CP"],"note":null,"coverUrl":null},{"id":"b003","title":"The Shining","isBachman":false,"year":1977,"firstCount":0,"clubCount":1,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"First Edition\" on CP","R49 on page 447"],"note":null,"coverUrl":null},{"id":"b004","title":"Night Shift","isBachman":false,"year":1978,"firstCount":0,"clubCount":1,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"First Edition\" on CP","S52 on page 336"],"note":null,"coverUrl":null},{"id":"b005","title":"The Stand","isBachman":false,"year":1978,"firstCount":0,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"First Edition\" on CP","T39 on page 823"],"note":null,"coverUrl":null},{"id":"b006","title":"The Long Walk","isBachman":true,"year":1979,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"First Signet Printing, July, 1979\" on CP","\"123456789\" on CP"],"note":null,"coverUrl":null},{"id":"b007","title":"The Dead Zone","isBachman":false,"year":1979,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"First published in 1979 by the Viking Press\" on CP"],"note":null,"coverUrl":null},{"id":"b008","title":"Firestarter","isBachman":false,"year":1980,"firstCount":0,"clubCount":1,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"First published in 1980 by the Viking Press\" on CP"],"note":null,"coverUrl":null},{"id":"b009","title":"Roadwork","isBachman":true,"year":1981,"firstCount":0,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"1 2 3 4 5 6 7 8 9\" on CP"],"note":null,"coverUrl":null},{"id":"b010","title":"Cujo","isBachman":false,"year":1981,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"First published in 1981 by the Viking Press\" on CP"],"note":"2 copies","coverUrl":null},{"id":"b011","title":"Danse Macabre","isBachman":false,"year":1981,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["RRD281 on CP"],"note":null,"coverUrl":null},{"id":"b012","title":"The Running Man","isBachman":true,"year":1982,"firstCount":0,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"First Printing May 1982\" on CP","\"1 2 3 4 5 6 7 8 9\" on CP"],"note":null,"coverUrl":null},{"id":"b013","title":"The Dark Tower I: The Gunslinger","isBachman":false,"year":1982,"firstCount":0,"clubCount":0,"paperbackCount":1,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"FIRST EDITION\" on CP"],"note":null,"coverUrl":null},{"id":"b014","title":"Different Seasons","isBachman":false,"year":1982,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"First published in 1982 by the Viking Press\" on CP"],"note":null,"coverUrl":null},{"id":"b015","title":"Cycle of the Werewolf","isBachman":false,"year":1983,"firstCount":0,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["Later reprinted in trade paperback by Signet and combined with script","for Silver Bullet"],"note":null,"coverUrl":null},{"id":"b016","title":"Pet Sematary","isBachman":false,"year":1983,"firstCount":0,"clubCount":1,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"First Edition\" on CP","Y38 on page 374"],"note":null,"coverUrl":null},{"id":"b017","title":"Christine","isBachman":false,"year":1983,"firstCount":0,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"First published in 1983 by the Viking Press\" on CP"],"note":null,"coverUrl":null},{"id":"b018","title":"Thinner","isBachman":true,"year":1984,"firstCount":0,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"First Printing, November 1984\" on CP","\"1 2 3 4 5 6 7 8 9\" on CP"],"note":null,"coverUrl":null},{"id":"b019","title":"The Talisman","isBachman":false,"year":1984,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"First published in 1984 by Viking Penguin, Inc.\" on CP"],"note":null,"coverUrl":null},{"id":"b020","title":"Skeleton Crew","isBachman":false,"year":1985,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"1 2 3 4 5 6 7 8 9 10\" on CP"],"note":null,"coverUrl":null},{"id":"b021","title":"IT","isBachman":false,"year":1986,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"First published in 1986 by Viking Penguin, Inc.\" on CP"],"note":null,"coverUrl":null},{"id":"b022","title":"Misery","isBachman":false,"year":1987,"firstCount":0,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"First published in 1987 by Viking Penguin, Inc.\" on CP"],"note":null,"coverUrl":null},{"id":"b023","title":"The Eyes of the Dragon","isBachman":false,"year":1987,"firstCount":0,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"First published in 1987 by Viking Penguin, Inc.\" on CP"],"note":null,"coverUrl":null},{"id":"b024","title":"The Dark Tower II: The Drawing of the Three","isBachman":false,"year":1987,"firstCount":0,"clubCount":0,"paperbackCount":1,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"FIRST EDITION\" on CP"],"note":null,"coverUrl":null},{"id":"b025","title":"The Tommyknockers","isBachman":false,"year":1987,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"1 2 3 4 5 6 7 8 9 10\" on CP","\"Permissions to come\" on CP"],"note":null,"coverUrl":null},{"id":"b026","title":"The Dark Half","isBachman":false,"year":1989,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"First published in 1989 by Viking Penguin\" on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b027","title":"Four Past Midnight","isBachman":false,"year":1990,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"First published in 1990 by Viking Penguin\" on CP","\"10 9 8 7 6 5 4 3 2 1\" on CP"],"note":null,"coverUrl":null},{"id":"b028","title":"The Stand - Complete and Uncut","isBachman":false,"year":1990,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"FIRST TRADE EDITION\" on CP"],"note":null,"coverUrl":null},{"id":"b029","title":"The Dark Tower III: The Waste Lands","isBachman":false,"year":1991,"firstCount":0,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"FIRST EDITION\" on CP"],"note":null,"coverUrl":null},{"id":"b030","title":"Needful Things","isBachman":false,"year":1991,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"First published in 1991 by Viking Penguin\" on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b031","title":"Dolores Claiborne","isBachman":false,"year":1992,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"First published in 1993 by Viking Penguin\u201d on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b032","title":"Gerald's Game","isBachman":false,"year":1992,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"First published in 1992 by Viking Penguin\u201d on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b033","title":"Nightmares and Dreamscapes","isBachman":false,"year":1993,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"First published in 1993 by Viking Penguin\u201d on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b034","title":"Insomnia","isBachman":false,"year":1994,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"First published in 1994 by Viking Penguin\u201d on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b035","title":"Rose Madder","isBachman":false,"year":1995,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"First published in 1995 by Viking Penguin\u201d on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b036","title":"The Green Mile","isBachman":false,"year":1996,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"First Printing, month , 1996\" on CP","month = March (Part 1) through August (Part 6)","\"10 9 8 7 6 5 4 3 2 1\" on CP"],"note":"HC Full collected","coverUrl":null},{"id":"b037","title":"The Regulators","isBachman":true,"year":1996,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"First Trade Printing, October 1996\" on CP","\"10 9 8 7 6 5 4 3 2 1\" on CP"],"note":null,"coverUrl":null},{"id":"b038","title":"Desperation","isBachman":false,"year":1996,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"First published in 1996 by Viking Penguin\u201d\u201d on CP","\"10 9 8 7 6 5 4 3 2 1\" on CP"],"note":null,"coverUrl":null},{"id":"b039","title":"The Dark Tower IV: Wizard and Glass","isBachman":false,"year":1997,"firstCount":0,"clubCount":1,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"First Edition\" on CP"],"note":null,"coverUrl":null},{"id":"b040","title":"Bag of Bones","isBachman":false,"year":1998,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b041","title":"The Girl Who Loved Tom Gordon","isBachman":false,"year":1999,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":"2 copies","coverUrl":null},{"id":"b042","title":"Hearts in Atlantis","isBachman":false,"year":1999,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b043","title":"Dreamcatcher","isBachman":false,"year":2001,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b044","title":"Black House","isBachman":false,"year":2001,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"First Trade Edition\" on CP","\"2 4 6 8 9 7 5 3\" on CP"],"note":null,"coverUrl":null},{"id":"b045","title":"From A Buick 8","isBachman":false,"year":2002,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\u201c1 3 5 7 9 10 8 6 4 2\u201d on CP"],"note":"2 copies","coverUrl":null},{"id":"b046","title":"Everything's Eventual: 14 Dark Tales","isBachman":false,"year":2002,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b047","title":"The Dark Tower V: The Wolves of the Calla","isBachman":false,"year":2003,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["FIRST TRADE EDITION on CP","\u201c1 3 5 7 9 10 8 6 4 2\u201d on CP"],"note":null,"coverUrl":null},{"id":"b048","title":"The Dark Tower VI: Song of Susannah","isBachman":false,"year":2004,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["FIRST TRADE EDITION on CP","\u201c1 3 5 7 9 10 8 6 4 2\u201d on CP"],"note":null,"coverUrl":null},{"id":"b049","title":"The Dark Tower VII: The Dark Tower","isBachman":false,"year":2004,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["FIRST TRADE EDITION on CP","\u201c1 3 5 7 9 10 8 6 4 2\u201d on CP"],"note":null,"coverUrl":null},{"id":"b050","title":"The Colorado Kid (Paperback)","isBachman":false,"year":2005,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["Header on page 159 says Grifter\u2019s Game instead of The Colorado Kid."],"note":null,"coverUrl":null},{"id":"b051","title":"Cell","isBachman":false,"year":2006,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\u201c1 3 5 7 9 10 8 6 4 2\u201d on CP"],"note":null,"coverUrl":null},{"id":"b052","title":"Lisey's Story","isBachman":false,"year":2006,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["\u201c1 3 5 7 9 10 8 6 4 2\u201d on CP"],"note":null,"coverUrl":null},{"id":"b053","title":"Blaze","isBachman":true,"year":2007,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["First Scribner hardcover edition June 2007","\u201c1 2 3 4 5 6 7 8 9 10\u201d on CP"],"note":null,"coverUrl":null},{"id":"b054","title":"Just After Sunset","isBachman":false,"year":2008,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["First Scribner hardcover edition November 2008","\u201c1 3 5 7 9 10 8 6 4 2\u201d on CP"],"note":null,"coverUrl":null},{"id":"b055","title":"Duma Key","isBachman":false,"year":2008,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["First Scribner hardcover edition January 2008","\u201c1 3 5 7 9 10 8 6 4 2\u201d on CP"],"note":null,"coverUrl":null},{"id":"b056","title":"Under the Dome","isBachman":false,"year":2009,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["First Scribner hardcover edition November 2009","\u201c1 3 5 7 9 10 8 6 4 2\u201d on CP"],"note":null,"coverUrl":null},{"id":"b057","title":"Full Dark, No Stars","isBachman":false,"year":2010,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["First Scribner hardcover edition November 2010","\u201c1 3 5 7 9 10 8 6 4 2\u201d on CP"],"note":null,"coverUrl":null},{"id":"b058","title":"Blockcade Billy","isBachman":false,"year":2010,"firstCount":0,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["First Edition on CP"],"note":null,"coverUrl":null},{"id":"b059","title":"11/22/63","isBachman":false,"year":2011,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["First Scribner hardcover edition November 2011","\u201c1 3 5 7 9 10 8 6 4 2\u201d on CP"],"note":null,"coverUrl":null},{"id":"b060","title":"The Dark Tower: The Wind Through the Keyhole","isBachman":false,"year":2012,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["First Scribner hardcover edition April 2012","\u201c1 3 5 7 9 10 8 6 4 2\u201d on CP"],"note":null,"coverUrl":null},{"id":"b061","title":"Joyland (Paperback)","isBachman":false,"year":2013,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["First Hard Case Crime edition: June 2013 on CP","(later covers state #1 NY Times Bestseller! in a red band at the top)"],"note":null,"coverUrl":null},{"id":"b062","title":"Doctor Sleep","isBachman":false,"year":2013,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["I love you  First Scribner hardcover edition September 2013","\u201c1 3 5 7 9 10 8 6 4 2\u201d on CP"],"note":null,"coverUrl":null},{"id":"b063","title":"Revival","isBachman":false,"year":2014,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["First Scribner hardcover edition: November 2014 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b064","title":"Mr. Mercedes","isBachman":false,"year":2014,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["First Scribner hardcover edition: June 2014 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b065","title":"Finders Keepers","isBachman":false,"year":2015,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["First Scribner hardcover edition: June 2015 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":"2 copies","coverUrl":null},{"id":"b066","title":"The Bazaar of Bad Dreams","isBachman":false,"year":2015,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["First Scribner hardcover edition: November 2015 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b067","title":"End of Watch","isBachman":false,"year":2016,"firstCount":0,"clubCount":1,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["First Scribner hardcover edition: June 2016 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b068","title":"Gwendy's Button Box","isBachman":false,"year":2017,"firstCount":0,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["First Edition on CP"],"note":null,"coverUrl":null},{"id":"b069","title":"Sleeping Beauties","isBachman":false,"year":2017,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["First Scribner hardcover edition: November 2017 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b070","title":"The Outsider","isBachman":false,"year":2018,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["First Scribner hardcover edition: May 2018 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b071","title":"Elevation","isBachman":false,"year":2018,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["First Scribner hardcover edition October 2018 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b072","title":"The Institute","isBachman":false,"year":2019,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["First Scribner hardcover edition September 2019 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b073","title":"If It Bleeds","isBachman":false,"year":2020,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["First Scribner hardcover edition May 2020 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b074","title":"Later","isBachman":false,"year":2021,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["First Hard Case Crime edition: March 2021"],"note":null,"coverUrl":null},{"id":"b075","title":"Billy Summers","isBachman":false,"year":2021,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["First Scribner hardcover edition August 2021 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b076","title":"Gwendy's Final Task","isBachman":false,"year":2022,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["First Edition on CP"],"note":null,"coverUrl":null},{"id":"b077","title":"Fairy Tale","isBachman":false,"year":2022,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["First Scribner hardcover edition September 2022 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b078","title":"Holly","isBachman":false,"year":2023,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["First Scribner hardcover edition September 2023 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b079","title":"You Like it Darker","isBachman":false,"year":2024,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["First Scribner hardcover edition May 2024 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b080","title":"Never Flinch","isBachman":false,"year":2025,"firstCount":1,"clubCount":0,"paperbackCount":0,"otherCount":0,"price":null,"condition":null,"tellSigns":["1 3 5 7 9 10 8 6 4 2"],"note":null,"coverUrl":null}];
 
 const STORAGE_KEY = 'sk_archive_sheet_url';
 
@@ -350,6 +357,20 @@ function toBool(v){
   const s = (v||'').toString().trim().toLowerCase();
   return s === 'true' || s === '1' || s === 'yes' || s === 'y';
 }
+function toCount(v){
+  const s = (v==null ? '' : v.toString().trim().toLowerCase());
+  if(s === '') return 0;
+  if(s === 'true' || s === 'yes' || s === 'y') return 1;
+  if(s === 'false' || s === 'no' || s === 'n') return 0;
+  const n = parseFloat(s);
+  return isNaN(n) ? 0 : Math.max(0, Math.round(n));
+}
+function toPrice(v){
+  const s = (v==null ? '' : v.toString().trim().replace(/[$,]/g,''));
+  if(s === '') return null;
+  const n = parseFloat(s);
+  return isNaN(n) ? null : n;
+}
 
 function mapRowToBook(row, idx){
   // normalize keys so header spacing/casing differences don't break mapping
@@ -367,10 +388,12 @@ function mapRowToBook(row, idx){
     title,
     isBachman: toBool(map['bachman']),
     year: parseInt(map['year'], 10) || null,
-    haveFirst: toBool(map['havefirstedition']),
-    haveClub: toBool(map['havebookclubhc'] ?? map['havebookclubor'] ?? map['havebookclub']),
-    havePaperback: toBool(map['havepaperback']),
-    haveOther: toBool(map['haveotheredition'] ?? map['haveother']),
+    firstCount: toCount(map['havefirstedition']),
+    clubCount: toCount(map['havebookcluborhc'] ?? map['havebookclubhc'] ?? map['havebookclub']),
+    paperbackCount: toCount(map['havepaperback']),
+    otherCount: toCount(map['haveotheredition'] ?? map['haveother']),
+    price: toPrice(map['price']),
+    condition: (map['condition'] || '').toString().trim() || null,
     tellSigns,
     note: (map['notes'] || '').toString().trim() || null,
     coverUrl: (map['coverurl'] || '').toString().trim() || null
@@ -378,28 +401,36 @@ function mapRowToBook(row, idx){
 }
 
 function computeFlags(b){
+  const total = b.firstCount + b.clubCount + b.paperbackCount + b.otherCount;
   return {
-    first: b.haveFirst,
-    club: b.haveClub,
-    paperback: b.havePaperback,
-    other: b.haveOther,
-    wishlist: !(b.haveFirst || b.haveClub || b.havePaperback || b.haveOther)
+    first: b.firstCount,
+    club: b.clubCount,
+    paperback: b.paperbackCount,
+    other: b.otherCount,
+    wishlist: total === 0
   };
 }
 
 function computeStats(){
   const total = BOOKS.length;
-  const firsts = BOOKS.filter(b=>b.haveFirst).length;
-  const ownedAny = BOOKS.filter(b=>b.haveFirst||b.haveClub||b.havePaperback||b.haveOther).length;
+  const firsts = BOOKS.filter(b=>b.firstCount > 0).length;
+  const ownedAny = BOOKS.filter(b=>!computeFlags(b).wishlist).length;
   const bachman = BOOKS.filter(b=>b.isBachman).length;
   const wishlist = BOOKS.filter(b=>computeFlags(b).wishlist).length;
-  return [
+  const totalCopies = BOOKS.reduce((sum,b)=> sum + b.firstCount + b.clubCount + b.paperbackCount + b.otherCount, 0);
+  const totalValue = BOOKS.reduce((sum,b)=> sum + (b.price != null ? b.price : 0), 0);
+  const stats = [
     {n: total, l:'Titles Tracked'},
     {n: firsts, l:'True Firsts Owned'},
     {n: ownedAny, l:'Total Owned'},
     {n: bachman, l:'Bachman Titles'},
     {n: wishlist, l:'On The Hunt'},
+    {n: totalCopies, l:'Copies On Shelf'},
   ];
+  if(totalValue > 0){
+    stats.push({n: '$'+totalValue.toLocaleString(undefined,{maximumFractionDigits:0}), l:'Est. Market Value'});
+  }
+  return stats;
 }
 
 function renderStats(){
@@ -420,16 +451,35 @@ function matches(b){
 function decadeOf(year){ return Math.floor(year/10)*10; }
 function escAttr(s){ return (s||'').replace(/"/g,'&quot;'); }
 
+const GRADE_COLORS = {
+  'as new': '#4B5A3E',
+  'fine (f)': '#4B5A3E',
+  'near fine (fn)': '#5b7a3e',
+  'very good (vg)': '#B08D45',
+  'good (g)': '#8c6d23',
+  'fair': '#a04a2e',
+  'poor': '#8C2331'
+};
+
 function cardHtml(b){
   const flags = computeFlags(b);
-  const stamps = Object.keys(flags).filter(k=>flags[k]).map(k=>`<span class="stamp ${STATUS_META[k].cls}">${STATUS_META[k].label}</span>`).join('');
+  const stamps = Object.keys(flags).filter(k=>k!=='wishlist' && flags[k] > 0).map(k=>{
+    const count = flags[k];
+    const label = STATUS_META[k].label + (count > 1 ? ` ×${count}` : '');
+    return `<span class="stamp ${STATUS_META[k].cls}">${label}</span>`;
+  }).join('') || `<span class="stamp wish">${STATUS_META.wishlist.label}</span>`;
   const tells = b.tellSigns.map(t=>`<div>${t.replace(/</g,'&lt;')}</div>`).join('');
+  const priceLine = b.price != null ? `<div class="note-tag">Est. value: $${b.price.toLocaleString(undefined,{maximumFractionDigits:2})}</div>` : '';
+  const gradeColor = b.condition ? (GRADE_COLORS[b.condition.toLowerCase()] || 'var(--fade-ink)') : null;
+  const gradeLine = b.condition ? `<div class="grade-tag" style="color:${gradeColor}">Grade: ${b.condition}</div>` : '';
   return `
   <div class="card">
     <div class="card-head"><span></span><span class="card-year">${b.year ?? ''}</span></div>
     <div class="card-title">${b.title}</div>
     ${b.isBachman ? `<div class="bachman-tag">writing as Richard Bachman</div>` : ''}
     <div class="stamp-row">${stamps}</div>
+    ${gradeLine}
+    ${priceLine}
     ${b.note ? `<div class="note-tag">Note: ${b.note}</div>` : ''}
     <div class="cover-zone">
       <div class="cover-box">
@@ -489,7 +539,27 @@ function cacheBust(url){
   return `${url}${sep}_cb=${Date.now()}`;
 }
 
-async function loadFromSheet(url){
+function extractSheetId(input){
+  const trimmed = (input||'').trim();
+  const m = trimmed.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  if(m) return m[1];
+  // assume they pasted the raw ID itself
+  if(/^[a-zA-Z0-9-_]{20,}$/.test(trimmed)) return trimmed;
+  return null;
+}
+
+async function loadFromOpensheet(id, tab){
+  const url = `https://opensheet.elk.sh/${encodeURIComponent(id)}/${encodeURIComponent(tab || 'Sheet1')}`;
+  const res = await fetch(cacheBust(url));
+  if(!res.ok) throw new Error('opensheet request failed');
+  const data = await res.json();
+  if(!Array.isArray(data) || data.length === 0) throw new Error('empty sheet');
+  const books = data.map(mapRowToBook).filter(Boolean);
+  if(books.length === 0) throw new Error('no rows parsed');
+  return books;
+}
+
+async function loadFromCsvUrl(url){
   return new Promise((resolve, reject)=>{
     Papa.parse(cacheBust(url), {
       download:true,
@@ -506,13 +576,24 @@ async function loadFromSheet(url){
   });
 }
 
+function getConnection(){
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if(!raw) return null;
+  try{ return JSON.parse(raw); }catch(e){ return null; }
+}
+
+async function loadFromConnection(conn){
+  if(conn.mode === 'csv') return loadFromCsvUrl(conn.url);
+  return loadFromOpensheet(conn.id, conn.tab);
+}
+
 async function initData(){
-  const savedUrl = localStorage.getItem(STORAGE_KEY);
+  const conn = getConnection();
   const sourceNote = document.getElementById('sourceNote');
   const footerHint = document.getElementById('footerHint');
-  if(savedUrl){
+  if(conn){
     try{
-      BOOKS = await loadFromSheet(savedUrl);
+      BOOKS = await loadFromConnection(conn);
       sourceNote.textContent = 'Connected to your Google Sheet — live data.';
       footerHint.innerHTML = `Connected. <a href="#" id="disconnectLink" style="color:var(--gold)">Disconnect</a>`;
       document.getElementById('disconnectLink')?.addEventListener('click', (e)=>{
@@ -556,10 +637,16 @@ document.getElementById('refreshBtn').addEventListener('click', ()=> initData())
 /* ---------- settings modal ---------- */
 const overlay = document.getElementById('modalOverlay');
 const urlInput = document.getElementById('sheetUrlInput');
+const tabInput = document.getElementById('sheetTabInput');
+const csvInput = document.getElementById('csvUrlInput');
+const advancedToggle = document.getElementById('advancedToggle');
 const modalError = document.getElementById('modalError');
 
 document.getElementById('settingsBtn').addEventListener('click', ()=>{
-  urlInput.value = localStorage.getItem(STORAGE_KEY) || '';
+  const conn = getConnection();
+  urlInput.value = '';
+  tabInput.value = conn && conn.tab ? conn.tab : '';
+  csvInput.value = conn && conn.mode === 'csv' ? conn.url : '';
   modalError.classList.remove('show');
   overlay.classList.add('open');
 });
@@ -569,19 +656,43 @@ document.getElementById('modalClear').addEventListener('click', ()=>{
   overlay.classList.remove('open');
   initData();
 });
+advancedToggle.addEventListener('click', (e)=>{
+  e.preventDefault();
+  const showing = csvInput.style.display !== 'none';
+  csvInput.style.display = showing ? 'none' : 'block';
+  advancedToggle.textContent = showing ? 'Have a published CSV link instead? Use that.' : 'Use the sheet link + tab name above instead.';
+});
+
 document.getElementById('modalSave').addEventListener('click', async ()=>{
-  const url = urlInput.value.trim();
-  if(!url){ return; }
   modalError.classList.remove('show');
+  const csvUrl = csvInput.value.trim();
+  let conn = null;
+
+  if(csvUrl){
+    conn = {mode:'csv', url: csvUrl};
+  } else {
+    const id = extractSheetId(urlInput.value);
+    if(!id){ modalError.textContent = "Couldn't find a sheet ID in that link — paste the full URL from your browser's address bar."; modalError.classList.add('show'); return; }
+    conn = {mode:'opensheet', id, tab: tabInput.value.trim() || 'Sheet1'};
+  }
+
   try{
-    const books = await loadFromSheet(url);
+    const books = await loadFromConnection(conn);
     BOOKS = books;
-    localStorage.setItem(STORAGE_KEY, url);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(conn));
     overlay.classList.remove('open');
     renderStats();
     renderArchive();
     document.getElementById('sourceNote').textContent = 'Connected to your Google Sheet — live data.';
+    document.getElementById('footerHint').innerHTML = `Connected. <a href="#" id="disconnectLink" style="color:var(--gold)">Disconnect</a>`;
+    document.getElementById('disconnectLink')?.addEventListener('click', (e)=>{
+      e.preventDefault();
+      localStorage.removeItem(STORAGE_KEY);
+      location.reload();
+    });
   }catch(e){
+    console.error(e);
+    modalError.textContent = "Couldn't load that sheet. Double-check sharing is set to \"Anyone with the link\" and the tab name is exactly right (case-sensitive).";
     modalError.classList.add('show');
   }
 });
