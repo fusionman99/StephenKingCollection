@@ -127,11 +127,31 @@ h1.title em{font-style:italic; color:var(--blood); font-weight:500;}
   display: flex; 
   align-items: center; 
   justify-content: center;
+  background: rgba(0,0,0,0.3); 
+  position: relative;
+  overflow: hidden;
 }
+
+/* Blurred background for the empty space */
+.cover-box::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: var(--bg-img);
+  background-size: cover;
+  background-position: center;
+  filter: blur(15px) brightness(0.3);
+}
+
 .cover-box img {
   width: 100%; 
   height: 100%; 
-  object-fit: cover; /* Fills the space evenly */
+  object-fit: contain; 
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.2s;
+  padding: 10px;
+}
 }
 .cover-box span { font-family: 'Courier Prime', monospace; font-size: 11px; color: rgba(255,255,255,0.2); }
 
@@ -309,6 +329,7 @@ function cardHtml(b){
   const flags = {first:b.firstCount, club:b.clubCount, paperback:b.paperbackCount, other:b.otherCount, wishlist:(b.firstCount+b.clubCount+b.paperbackCount+b.otherCount)===0};
   const stamps = Object.keys(flags).filter(k=>k!=='wishlist' && flags[k]>0).map(k=>`<span class="stamp ${STATUS_META[k].cls}">${STATUS_META[k].label}</span>`).join('') || `<span class="stamp wish">Wishlist</span>`;
   const tells = b.tellSigns.map(t=>`<div>» ${t}</div>`).join('');
+  
   return `
   <div class="card">
     <div class="card-head">
@@ -322,7 +343,9 @@ function cardHtml(b){
     ${b.price ? `<div class="note-tag">Value: ${b.price}</div>` : ''}
     ${b.note ? `<div class="note-tag">Note: ${b.note}</div>` : ''}
     <div class="cover-zone">
-      <div class="cover-box">${b.coverUrl ? `<img src="${b.coverUrl}">` : `<span style="font-size:10px; color:var(--manila-dark);">NO COVER</span>`}</div>
+      <div class="cover-box" style="--bg-img: url('${b.coverUrl}')">
+        ${b.coverUrl ? `<img src="${b.coverUrl}">` : `<span style="font-size:10px; color:var(--manila-dark);">NO COVER</span>`}
+      </div>
     </div>
     ${tells ? `<button class="evidence-toggle" onclick="this.nextElementSibling.classList.toggle('open')">Show 1st-Edition Tells ▾</button><div class="evidence-block">${tells}</div>` : ''}
   </div>`;
