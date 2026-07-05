@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The King Collection — Collector's Dossier</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/papaparse/5.4.1/papaparse.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=Newsreader:ital,wght@0,400;0,500;0,600;1,400&family=Courier+Prime:wght@400;700&display=swap');
+
+:root{
+  --ink:#17150F;
+  --ink-2:#232016;
+  --paper:#EAE1C7;
+  --paper-2:#F4EEDA;
+  --manila:#B79A66;
+  --manila-dark:#8C7346;
+  --blood:#8C2331;
+  --blood-dark:#6B1A26;
+  --gold:#B08D45;
+  --moss:#4B5A3E;
+  --fade-ink:#4A4536;
+  --line:rgba(23,21,15,0.18);
+  --shadow: 0 6px 18px rgba(0,0,0,0.35);
+}
+
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0;
+  background:var(--ink);
+  color:var(--paper);
+  font-family:'Newsreader', serif;
+  -webkit-font-smoothing:antialiased;
+}
+
+.hero{
+  position:relative;
+  padding:100px 24px 70px;
+  text-align:center;
+  background:
+    radial-gradient(ellipse at top, rgba(140,35,49,0.18), transparent 60%),
+    var(--ink);
+  border-bottom:1px solid rgba(176,141,69,0.25);
+  overflow:hidden;
+}
+.hero::before{
+  content:"";
+  position:absolute; inset:0;
+  background-image: repeating-linear-gradient(0deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 3px);
+  pointer-events:none;
+}
+.settings-btn{
+  position:absolute;
+  top:22px; right:22px;
+  font-family:'Courier Prime', monospace;
+  font-size:11px;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  color:rgba(234,225,199,0.6);
+  background:transparent;
+  border:1px solid rgba(176,141,69,0.4);
+  padding:8px 12px;
+  border-radius:2px;
+  cursor:pointer;
+  z-index:5;
+}
+.settings-btn:hover{color:var(--paper-2); border-color:var(--gold);}
+
+.eyebrow{
+  font-family:'Courier Prime', monospace;
+  letter-spacing:0.28em;
+  text-transform:uppercase;
+  font-size:12px;
+  color:var(--gold);
+  margin-bottom:18px;
+  position:relative;
+}
+.eyebrow::before, .eyebrow::after{content:"—"; margin:0 10px; opacity:0.6;}
+h1.title{
+  font-family:'Fraunces', serif;
+  font-weight:700;
+  font-size:clamp(40px, 7vw, 84px);
+  line-height:0.98;
+  margin:0 0 18px;
+  letter-spacing:-0.01em;
+  color:var(--paper-2);
+}
+h1.title em{font-style:italic; color:var(--blood); font-weight:500;}
+.subtitle{
+  max-width:560px; margin:0 auto; font-size:17px; line-height:1.6;
+  color:rgba(234,225,199,0.75); font-style:italic;
+}
+.case-number{
+  margin-top:28px; font-family:'Courier Prime', monospace; font-size:11px;
+  letter-spacing:0.15em; color:rgba(234,225,199,0.4); text-transform:uppercase;
+}
+.data-source-note{
+  margin-top:10px; font-family:'Courier Prime', monospace; font-size:10.5px;
+  color:rgba(176,141,69,0.7);
+}
+
+.stats-strip{
+  display:flex; flex-wrap:wrap; justify-content:center; gap:0;
+  max-width:920px; margin:44px auto 0;
+  border:1px solid rgba(176,141,69,0.3); background:rgba(234,225,199,0.03);
+}
+.stat{
+  flex:1 1 160px; padding:22px 16px; text-align:center;
+  border-right:1px solid rgba(176,141,69,0.3); position:relative;
+}
+.stat:last-child{border-right:none;}
+.stat-num{
+  font-family:'Fraunces', serif; font-weight:700; font-size:38px;
+  color:var(--gold); display:block; line-height:1;
+}
+.stat-label{
+  font-family:'Courier Prime', monospace; font-size:10px; letter-spacing:0.12em;
+  text-transform:uppercase; color:rgba(234,225,199,0.55); display:block; margin-top:8px;
+}
+
+.controls{
+  position:sticky; top:0; z-index:50; background:var(--ink-2);
+  border-bottom:1px solid rgba(176,141,69,0.3); padding:16px 24px;
+  display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:center;
+}
+.search-wrap{position:relative; flex:1 1 260px; max-width:340px;}
+.search-wrap input{
+  width:100%; background:var(--paper-2); border:1px solid var(--manila-dark);
+  color:var(--ink); font-family:'Courier Prime', monospace; font-size:13px;
+  padding:10px 12px 10px 32px; border-radius:2px;
+}
+.search-wrap input::placeholder{color:var(--fade-ink); opacity:0.6;}
+.search-wrap::before{
+  content:"⌕"; position:absolute; left:10px; top:50%; transform:translateY(-50%);
+  color:var(--fade-ink); font-size:16px;
+}
+.chip-row{display:flex; flex-wrap:wrap; gap:8px; justify-content:center;}
+.chip{
+  font-family:'Courier Prime', monospace; font-size:11px; letter-spacing:0.06em;
+  text-transform:uppercase; padding:8px 14px; border:1px solid rgba(176,141,69,0.4);
+  background:transparent; color:rgba(234,225,199,0.7); cursor:pointer; border-radius:2px;
+  transition:all .15s ease; white-space:nowrap;
+}
+.chip:hover{border-color:var(--gold); color:var(--paper-2);}
+.chip.active{background:var(--blood); border-color:var(--blood); color:#fff;}
+.sort-select{
+  font-family:'Courier Prime', monospace; font-size:11px; text-transform:uppercase;
+  letter-spacing:0.06em; background:transparent; color:rgba(234,225,199,0.7);
+  border:1px solid rgba(176,141,69,0.4); padding:8px 10px; border-radius:2px;
+}
+.sort-select option{background:var(--ink-2); color:var(--paper);}
+.refresh-btn{
+  font-family:'Courier Prime', monospace; font-size:11px; text-transform:uppercase;
+  letter-spacing:0.06em; background:transparent; color:var(--gold);
+  border:1px solid rgba(176,141,69,0.5); padding:8px 12px; border-radius:2px; cursor:pointer;
+}
+.refresh-btn:hover{background:rgba(176,141,69,0.15);}
+
+.archive{max-width:1180px; margin:0 auto; padding:50px 24px 100px;}
+.decade-tab{display:flex; align-items:center; gap:16px; margin:56px 0 26px;}
+.decade-tab:first-child{margin-top:0;}
+.decade-tab .label{
+  font-family:'Fraunces', serif; font-weight:700; font-size:26px;
+  background:var(--manila-dark); color:#2a2113; padding:6px 18px;
+  border-radius:2px 8px 8px 2px; box-shadow:var(--shadow); position:relative;
+}
+.decade-tab .rule{flex:1; height:1px; background:linear-gradient(90deg, rgba(176,141,69,0.5), transparent);}
+.decade-count{font-family:'Courier Prime', monospace; font-size:11px; color:rgba(234,225,199,0.45); white-space:nowrap;}
+
+.grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:22px;}
+
+.card{
+  background:var(--paper-2); color:var(--ink); border-radius:2px; box-shadow:var(--shadow);
+  position:relative; padding:20px 18px 18px; display:flex; flex-direction:column; gap:12px;
+  transition:transform .18s ease, box-shadow .18s ease;
+}
+.card:hover{transform:translateY(-3px); box-shadow:0 12px 26px rgba(0,0,0,0.45);}
+.card::before{
+  content:""; position:absolute; left:8px; top:0; bottom:0; width:6px;
+  background-image: radial-gradient(circle, var(--ink) 2.6px, transparent 2.7px);
+  background-size:6px 26px; background-repeat:repeat-y; background-position: 0 14px; opacity:0.55;
+}
+.card-head{display:flex; justify-content:space-between; align-items:flex-start; gap:10px; padding-left:14px;}
+.card-year{font-family:'Courier Prime', monospace; font-size:13px; color:var(--blood); font-weight:700;}
+.card-title{font-family:'Fraunces', serif; font-weight:600; font-size:22px; line-height:1.15; padding-left:14px; color:var(--ink);}
+.bachman-tag{padding-left:14px; margin-top:-8px; font-family:'Courier Prime', monospace; font-size:10.5px; letter-spacing:0.04em; color:var(--blood-dark); font-style:italic;}
+
+.stamp-row{padding-left:14px; display:flex; flex-wrap:wrap; gap:6px;}
+.stamp{
+  font-family:'Courier Prime', monospace; font-size:10px; letter-spacing:0.08em; text-transform:uppercase;
+  padding:4px 9px; border:1.5px solid currentColor; border-radius:3px; transform:rotate(-2deg);
+  display:inline-block; mix-blend-mode:multiply;
+}
+.stamp.first{color:var(--moss);}
+.stamp.club{color:var(--gold);}
+.stamp.paper{color:#5b6b8c;}
+.stamp.other{color:#8c5b23;}
+.stamp.wish{color:var(--fade-ink); border-style:dashed;}
+.note-tag{font-family:'Courier Prime', monospace; font-size:10px; color:var(--fade-ink); padding-left:14px; margin-top:-4px;}
+
+.cover-zone{margin-left:14px;}
+.cover-box{
+  width:100%; max-width:120px; height:170px;
+  background:repeating-linear-gradient(45deg, rgba(23,21,15,0.06), rgba(23,21,15,0.06) 4px, transparent 4px, transparent 8px);
+  border:1.5px dashed var(--manila-dark); border-radius:2px;
+  display:flex; align-items:center; justify-content:center; overflow:hidden;
+}
+.cover-box img{width:100%; height:100%; object-fit:cover; display:block;}
+.cover-box .plus{font-family:'Courier Prime', monospace; font-size:9px; text-align:center; color:var(--manila-dark); line-height:1.4; padding:4px;}
+
+.evidence-toggle{
+  margin-left:14px; align-self:flex-start; font-family:'Courier Prime', monospace; font-size:10.5px;
+  letter-spacing:0.05em; text-transform:uppercase; color:var(--blood); background:none; border:none;
+  cursor:pointer; padding:0; text-decoration:underline; text-underline-offset:3px;
+}
+.evidence-block{
+  margin-left:14px; background:rgba(23,21,15,0.05); border-left:2px solid var(--blood);
+  padding:10px 12px; font-family:'Courier Prime', monospace; font-size:11.5px; line-height:1.6;
+  color:var(--ink-2); display:none;
+}
+.evidence-block.open{display:block;}
+.evidence-block div{margin-bottom:3px;}
+.evidence-block div::before{content:"» "; color:var(--blood);}
+
+.empty-state{text-align:center; padding:80px 20px; color:rgba(234,225,199,0.5); font-family:'Courier Prime', monospace; font-size:13px; line-height:1.8;}
+.empty-state code{background:rgba(234,225,199,0.1); padding:2px 6px; border-radius:2px;}
+
+footer{
+  text-align:center; padding:40px 24px 60px; font-family:'Courier Prime', monospace; font-size:11px;
+  color:rgba(234,225,199,0.35); border-top:1px solid rgba(176,141,69,0.2);
+}
+footer a{color:var(--gold);}
+
+/* Settings modal */
+.modal-overlay{
+  display:none; position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:200;
+  align-items:center; justify-content:center; padding:20px;
+}
+.modal-overlay.open{display:flex;}
+.modal{
+  background:var(--paper-2); color:var(--ink); max-width:480px; width:100%;
+  padding:28px 26px; border-radius:3px; box-shadow:0 20px 60px rgba(0,0,0,0.5);
+}
+.modal h2{font-family:'Fraunces', serif; font-size:22px; margin:0 0 6px;}
+.modal p{font-family:'Newsreader', serif; font-size:14px; line-height:1.6; color:var(--fade-ink); margin:0 0 16px;}
+.modal ol{font-family:'Newsreader', serif; font-size:14px; line-height:1.7; color:var(--ink); padding-left:20px; margin:0 0 18px;}
+.modal input{
+  width:100%; font-family:'Courier Prime', monospace; font-size:12px; padding:10px 10px;
+  border:1px solid var(--manila-dark); border-radius:2px; margin-bottom:12px;
+}
+.modal-buttons{display:flex; gap:10px; justify-content:flex-end;}
+.modal-buttons button{
+  font-family:'Courier Prime', monospace; font-size:11px; text-transform:uppercase;
+  letter-spacing:0.05em; padding:9px 16px; border:none; border-radius:2px; cursor:pointer;
+}
+.btn-primary{background:var(--blood); color:#fff;}
+.btn-secondary{background:transparent; color:var(--fade-ink); border:1px solid var(--manila-dark) !important;}
+.modal-error{font-family:'Courier Prime', monospace; font-size:11.5px; color:var(--blood); margin:-6px 0 12px; display:none;}
+.modal-error.show{display:block;}
+
+@media (max-width:520px){
+  .hero{padding:70px 18px 50px;}
+  .stat{flex:1 1 45%;}
+  .settings-btn{position:static; display:block; margin:0 auto 20px; width:fit-content;}
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <button class="settings-btn" id="settingsBtn">⚙ Connect Sheet</button>
+  <div class="eyebrow">Collector's Dossier</div>
+  <h1 class="title">THE KING<br><em>Archive</em></h1>
+  <p class="subtitle">A working field guide to first-edition Stephen King — every title, every tell-tale sign, one shelf at a time.</p>
+  <div class="case-number" id="caseNumber">CASE FILE NO. SK-1974–PRESENT</div>
+  <div class="data-source-note" id="sourceNote">Showing built-in starter data — connect your Google Sheet to make this fully yours.</div>
+
+  <div class="stats-strip" id="statsStrip"></div>
+</div>
+
+<div class="controls">
+  <div class="search-wrap">
+    <input type="text" id="searchInput" placeholder="Search titles…">
+  </div>
+  <div class="chip-row" id="chipRow">
+    <button class="chip active" data-filter="all">All</button>
+    <button class="chip" data-filter="first">First Editions</button>
+    <button class="chip" data-filter="club">Book Club / HC</button>
+    <button class="chip" data-filter="paperback">Paperback</button>
+    <button class="chip" data-filter="other">Other</button>
+    <button class="chip" data-filter="wishlist">Wishlist</button>
+    <button class="chip" data-bachman="1">As Bachman</button>
+  </div>
+  <select class="sort-select" id="sortSelect">
+    <option value="year">Sort: Chronological</option>
+    <option value="alpha">Sort: Alphabetical</option>
+  </select>
+  <button class="refresh-btn" id="refreshBtn">↻ Refresh</button>
+</div>
+
+<div class="archive" id="archive"></div>
+
+<footer>
+  Data lives in your Google Sheet. Edit checkboxes, add new rows for new releases, drop in cover image URLs — then hit Refresh here.<br>
+  <span id="footerHint">Not connected yet? Click "Connect Sheet" above.</span>
+</footer>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h2>Connect your Google Sheet</h2>
+    <p>Publish your sheet as CSV, then paste the link below. This is saved in your browser only.</p>
+    <ol>
+      <li>In Google Sheets: <strong>File → Share → Publish to web</strong></li>
+      <li>Choose the correct sheet/tab, set format to <strong>CSV</strong>, click <strong>Publish</strong></li>
+      <li>Copy the link it gives you and paste it here</li>
+    </ol>
+    <div class="modal-error" id="modalError">Couldn't load that link. Make sure it's published as CSV and the sharing setting is "Anyone with the link can view."</div>
+    <input type="text" id="sheetUrlInput" placeholder="https://docs.google.com/spreadsheets/d/e/…/pub?output=csv">
+    <div class="modal-buttons">
+      <button class="btn-secondary" id="modalCancel">Cancel</button>
+      <button class="btn-secondary" id="modalClear">Use Starter Data</button>
+      <button class="btn-primary" id="modalSave">Connect</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- Starter data (used until a sheet is connected) ---------- */
+const DEFAULT_BOOKS = [{"id":"b000","title":"Carrie","isBachman":false,"year":1974,"haveFirst":false,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First Edition\" on CP","T39 on page 823"],"note":null,"coverUrl":null},{"id":"b001","title":"Salem's Lot","isBachman":false,"year":1975,"haveFirst":false,"haveClub":true,"havePaperback":false,"haveOther":false,"tellSigns":["\"First Edition\" on CP","Q37 on page 439"],"note":null,"coverUrl":null},{"id":"b002","title":"Rage","isBachman":true,"year":1977,"haveFirst":false,"haveClub":true,"havePaperback":false,"haveOther":false,"tellSigns":["\"First Signet Printing, September, 1977\" on CP","\"1 2 3 4 5 6 7 8 9\" on CP"],"note":null,"coverUrl":null},{"id":"b003","title":"The Shining","isBachman":false,"year":1977,"haveFirst":false,"haveClub":true,"havePaperback":false,"haveOther":false,"tellSigns":["\"First Edition\" on CP","R49 on page 447"],"note":null,"coverUrl":null},{"id":"b004","title":"Night Shift","isBachman":false,"year":1978,"haveFirst":false,"haveClub":true,"havePaperback":false,"haveOther":false,"tellSigns":["\"First Edition\" on CP","S52 on page 336"],"note":null,"coverUrl":null},{"id":"b005","title":"The Stand","isBachman":false,"year":1978,"haveFirst":false,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First Edition\" on CP","T39 on page 823"],"note":null,"coverUrl":null},{"id":"b006","title":"The Long Walk","isBachman":true,"year":1979,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First Signet Printing, July, 1979\" on CP","\"123456789\" on CP"],"note":null,"coverUrl":null},{"id":"b007","title":"The Dead Zone","isBachman":false,"year":1979,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First published in 1979 by the Viking Press\" on CP"],"note":null,"coverUrl":null},{"id":"b008","title":"Firestarter","isBachman":false,"year":1980,"haveFirst":false,"haveClub":true,"havePaperback":false,"haveOther":false,"tellSigns":["\"First published in 1980 by the Viking Press\" on CP"],"note":null,"coverUrl":null},{"id":"b009","title":"Roadwork","isBachman":true,"year":1981,"haveFirst":false,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"1 2 3 4 5 6 7 8 9\" on CP"],"note":null,"coverUrl":null},{"id":"b010","title":"Cujo","isBachman":false,"year":1981,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First published in 1981 by the Viking Press\" on CP"],"note":"2 copies","coverUrl":null},{"id":"b011","title":"Danse Macabre","isBachman":false,"year":1981,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["RRD281 on CP"],"note":null,"coverUrl":null},{"id":"b012","title":"The Running Man","isBachman":true,"year":1982,"haveFirst":false,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First Printing May 1982\" on CP","\"1 2 3 4 5 6 7 8 9\" on CP"],"note":null,"coverUrl":null},{"id":"b013","title":"The Dark Tower I: The Gunslinger","isBachman":false,"year":1982,"haveFirst":false,"haveClub":false,"havePaperback":true,"haveOther":false,"tellSigns":["\"FIRST EDITION\" on CP"],"note":null,"coverUrl":null},{"id":"b014","title":"Different Seasons","isBachman":false,"year":1982,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First published in 1982 by the Viking Press\" on CP"],"note":null,"coverUrl":null},{"id":"b015","title":"Cycle of the Werewolf","isBachman":false,"year":1983,"haveFirst":false,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["Later reprinted in trade paperback by Signet and combined with script","for Silver Bullet"],"note":null,"coverUrl":null},{"id":"b016","title":"Pet Sematary","isBachman":false,"year":1983,"haveFirst":false,"haveClub":true,"havePaperback":false,"haveOther":false,"tellSigns":["\"First Edition\" on CP","Y38 on page 374"],"note":null,"coverUrl":null},{"id":"b017","title":"Christine","isBachman":false,"year":1983,"haveFirst":false,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First published in 1983 by the Viking Press\" on CP"],"note":null,"coverUrl":null},{"id":"b018","title":"Thinner","isBachman":true,"year":1984,"haveFirst":false,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First Printing, November 1984\" on CP","\"1 2 3 4 5 6 7 8 9\" on CP"],"note":null,"coverUrl":null},{"id":"b019","title":"The Talisman","isBachman":false,"year":1984,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First published in 1984 by Viking Penguin, Inc.\" on CP"],"note":null,"coverUrl":null},{"id":"b020","title":"Skeleton Crew","isBachman":false,"year":1985,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"1 2 3 4 5 6 7 8 9 10\" on CP"],"note":null,"coverUrl":null},{"id":"b021","title":"IT","isBachman":false,"year":1986,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First published in 1986 by Viking Penguin, Inc.\" on CP"],"note":null,"coverUrl":null},{"id":"b022","title":"Misery","isBachman":false,"year":1987,"haveFirst":false,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First published in 1987 by Viking Penguin, Inc.\" on CP"],"note":null,"coverUrl":null},{"id":"b023","title":"The Eyes of the Dragon","isBachman":false,"year":1987,"haveFirst":false,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First published in 1987 by Viking Penguin, Inc.\" on CP"],"note":null,"coverUrl":null},{"id":"b024","title":"The Dark Tower II: The Drawing of the Three","isBachman":false,"year":1987,"haveFirst":false,"haveClub":false,"havePaperback":true,"haveOther":false,"tellSigns":["\"FIRST EDITION\" on CP"],"note":null,"coverUrl":null},{"id":"b025","title":"The Tommyknockers","isBachman":false,"year":1987,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"1 2 3 4 5 6 7 8 9 10\" on CP","\"Permissions to come\" on CP"],"note":null,"coverUrl":null},{"id":"b026","title":"The Dark Half","isBachman":false,"year":1989,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First published in 1989 by Viking Penguin\" on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b027","title":"Four Past Midnight","isBachman":false,"year":1990,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First published in 1990 by Viking Penguin\" on CP","\"10 9 8 7 6 5 4 3 2 1\" on CP"],"note":null,"coverUrl":null},{"id":"b028","title":"The Stand - Complete and Uncut","isBachman":false,"year":1990,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"FIRST TRADE EDITION\" on CP"],"note":null,"coverUrl":null},{"id":"b029","title":"The Dark Tower III: The Waste Lands","isBachman":false,"year":1991,"haveFirst":false,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"FIRST EDITION\" on CP"],"note":null,"coverUrl":null},{"id":"b030","title":"Needful Things","isBachman":false,"year":1991,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First published in 1991 by Viking Penguin\" on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b031","title":"Dolores Claiborne","isBachman":false,"year":1992,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First published in 1993 by Viking Penguin\u201d on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b032","title":"Gerald's Game","isBachman":false,"year":1992,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First published in 1992 by Viking Penguin\u201d on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b033","title":"Nightmares and Dreamscapes","isBachman":false,"year":1993,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First published in 1993 by Viking Penguin\u201d on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b034","title":"Insomnia","isBachman":false,"year":1994,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First published in 1994 by Viking Penguin\u201d on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b035","title":"Rose Madder","isBachman":false,"year":1995,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First published in 1995 by Viking Penguin\u201d on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b036","title":"The Green Mile","isBachman":false,"year":1996,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First Printing, month , 1996\" on CP","month = March (Part 1) through August (Part 6)","\"10 9 8 7 6 5 4 3 2 1\" on CP"],"note":"HC Full collected","coverUrl":null},{"id":"b037","title":"The Regulators","isBachman":true,"year":1996,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First Trade Printing, October 1996\" on CP","\"10 9 8 7 6 5 4 3 2 1\" on CP"],"note":null,"coverUrl":null},{"id":"b038","title":"Desperation","isBachman":false,"year":1996,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First published in 1996 by Viking Penguin\u201d\u201d on CP","\"10 9 8 7 6 5 4 3 2 1\" on CP"],"note":null,"coverUrl":null},{"id":"b039","title":"The Dark Tower IV: Wizard and Glass","isBachman":false,"year":1997,"haveFirst":false,"haveClub":true,"havePaperback":false,"haveOther":false,"tellSigns":["\"First Edition\" on CP"],"note":null,"coverUrl":null},{"id":"b040","title":"Bag of Bones","isBachman":false,"year":1998,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b041","title":"The Girl Who Loved Tom Gordon","isBachman":false,"year":1999,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":"2 copies","coverUrl":null},{"id":"b042","title":"Hearts in Atlantis","isBachman":false,"year":1999,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b043","title":"Dreamcatcher","isBachman":false,"year":2001,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b044","title":"Black House","isBachman":false,"year":2001,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"First Trade Edition\" on CP","\"2 4 6 8 9 7 5 3\" on CP"],"note":null,"coverUrl":null},{"id":"b045","title":"From A Buick 8","isBachman":false,"year":2002,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\u201c1 3 5 7 9 10 8 6 4 2\u201d on CP"],"note":"2 copies","coverUrl":null},{"id":"b046","title":"Everything's Eventual: 14 Dark Tales","isBachman":false,"year":2002,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b047","title":"The Dark Tower V: The Wolves of the Calla","isBachman":false,"year":2003,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["FIRST TRADE EDITION on CP","\u201c1 3 5 7 9 10 8 6 4 2\u201d on CP"],"note":null,"coverUrl":null},{"id":"b048","title":"The Dark Tower VI: Song of Susannah","isBachman":false,"year":2004,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["FIRST TRADE EDITION on CP","\u201c1 3 5 7 9 10 8 6 4 2\u201d on CP"],"note":null,"coverUrl":null},{"id":"b049","title":"The Dark Tower VII: The Dark Tower","isBachman":false,"year":2004,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["FIRST TRADE EDITION on CP","\u201c1 3 5 7 9 10 8 6 4 2\u201d on CP"],"note":null,"coverUrl":null},{"id":"b050","title":"The Colorado Kid (Paperback)","isBachman":false,"year":2005,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["Header on page 159 says Grifter\u2019s Game instead of The Colorado Kid."],"note":null,"coverUrl":null},{"id":"b051","title":"Cell","isBachman":false,"year":2006,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\u201c1 3 5 7 9 10 8 6 4 2\u201d on CP"],"note":null,"coverUrl":null},{"id":"b052","title":"Lisey's Story","isBachman":false,"year":2006,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["\u201c1 3 5 7 9 10 8 6 4 2\u201d on CP"],"note":null,"coverUrl":null},{"id":"b053","title":"Blaze","isBachman":true,"year":2007,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition June 2007","\u201c1 2 3 4 5 6 7 8 9 10\u201d on CP"],"note":null,"coverUrl":null},{"id":"b054","title":"Just After Sunset","isBachman":false,"year":2008,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition November 2008","\u201c1 3 5 7 9 10 8 6 4 2\u201d on CP"],"note":null,"coverUrl":null},{"id":"b055","title":"Duma Key","isBachman":false,"year":2008,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition January 2008","\u201c1 3 5 7 9 10 8 6 4 2\u201d on CP"],"note":null,"coverUrl":null},{"id":"b056","title":"Under the Dome","isBachman":false,"year":2009,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition November 2009","\u201c1 3 5 7 9 10 8 6 4 2\u201d on CP"],"note":null,"coverUrl":null},{"id":"b057","title":"Full Dark, No Stars","isBachman":false,"year":2010,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition November 2010","\u201c1 3 5 7 9 10 8 6 4 2\u201d on CP"],"note":null,"coverUrl":null},{"id":"b058","title":"Blockcade Billy","isBachman":false,"year":2010,"haveFirst":false,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Edition on CP"],"note":null,"coverUrl":null},{"id":"b059","title":"11/22/63","isBachman":false,"year":2011,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition November 2011","\u201c1 3 5 7 9 10 8 6 4 2\u201d on CP"],"note":null,"coverUrl":null},{"id":"b060","title":"The Dark Tower: The Wind Through the Keyhole","isBachman":false,"year":2012,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition April 2012","\u201c1 3 5 7 9 10 8 6 4 2\u201d on CP"],"note":null,"coverUrl":null},{"id":"b061","title":"Joyland (Paperback)","isBachman":false,"year":2013,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Hard Case Crime edition: June 2013 on CP","(later covers state #1 NY Times Bestseller! in a red band at the top)"],"note":null,"coverUrl":null},{"id":"b062","title":"Doctor Sleep","isBachman":false,"year":2013,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["I love you  First Scribner hardcover edition September 2013","\u201c1 3 5 7 9 10 8 6 4 2\u201d on CP"],"note":null,"coverUrl":null},{"id":"b063","title":"Revival","isBachman":false,"year":2014,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition: November 2014 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b064","title":"Mr. Mercedes","isBachman":false,"year":2014,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition: June 2014 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b065","title":"Finders Keepers","isBachman":false,"year":2015,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition: June 2015 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":"2 copies","coverUrl":null},{"id":"b066","title":"The Bazaar of Bad Dreams","isBachman":false,"year":2015,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition: November 2015 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b067","title":"End of Watch","isBachman":false,"year":2016,"haveFirst":false,"haveClub":true,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition: June 2016 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b068","title":"Gwendy's Button Box","isBachman":false,"year":2017,"haveFirst":false,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Edition on CP"],"note":null,"coverUrl":null},{"id":"b069","title":"Sleeping Beauties","isBachman":false,"year":2017,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition: November 2017 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b070","title":"The Outsider","isBachman":false,"year":2018,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition: May 2018 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b071","title":"Elevation","isBachman":false,"year":2018,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition October 2018 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b072","title":"The Institute","isBachman":false,"year":2019,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition September 2019 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b073","title":"If It Bleeds","isBachman":false,"year":2020,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition May 2020 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b074","title":"Later","isBachman":false,"year":2021,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Hard Case Crime edition: March 2021"],"note":null,"coverUrl":null},{"id":"b075","title":"Billy Summers","isBachman":false,"year":2021,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition August 2021 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b076","title":"Gwendy's Final Task","isBachman":false,"year":2022,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Edition on CP"],"note":null,"coverUrl":null},{"id":"b077","title":"Fairy Tale","isBachman":false,"year":2022,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition September 2022 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b078","title":"Holly","isBachman":false,"year":2023,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition September 2023 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b079","title":"You Like it Darker","isBachman":false,"year":2024,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["First Scribner hardcover edition May 2024 on CP","\"1 3 5 7 9 10 8 6 4 2\" on CP"],"note":null,"coverUrl":null},{"id":"b080","title":"Never Flinch","isBachman":false,"year":2025,"haveFirst":true,"haveClub":false,"havePaperback":false,"haveOther":false,"tellSigns":["1 3 5 7 9 10 8 6 4 2"],"note":null,"coverUrl":null}];
+
+const STORAGE_KEY = 'sk_archive_sheet_url';
+
+const STATUS_META = {
+  first:   {label:'First Edition', cls:'first'},
+  club:    {label:'Book Club / HC', cls:'club'},
+  paperback:{label:'Paperback', cls:'paper'},
+  other:   {label:'Other Edition', cls:'other'},
+  wishlist:{label:'Wishlist', cls:'wish'}
+};
+
+let BOOKS = DEFAULT_BOOKS;
+let filterStatus = 'all';
+let bachmanOnly = false;
+let searchTerm = '';
+let sortMode = 'year';
+
+function norm(s){ return (s||'').toString().trim().toLowerCase().replace(/[^a-z0-9]/g,''); }
+function toBool(v){
+  const s = (v||'').toString().trim().toLowerCase();
+  return s === 'true' || s === '1' || s === 'yes' || s === 'y';
+}
+
+function mapRowToBook(row, idx){
+  // normalize keys so header spacing/casing differences don't break mapping
+  const map = {};
+  Object.keys(row).forEach(k => map[norm(k)] = row[k]);
+
+  const title = (map['title'] || '').toString().trim();
+  if(!title) return null;
+
+  const tellRaw = (map['tellsigns'] || '').toString();
+  const tellSigns = tellRaw.split(/\r?\n|\s*\|\s*/).map(s=>s.trim()).filter(Boolean);
+
+  return {
+    id: 'r' + idx,
+    title,
+    isBachman: toBool(map['bachman']),
+    year: parseInt(map['year'], 10) || null,
+    haveFirst: toBool(map['havefirstedition']),
+    haveClub: toBool(map['havebookclubhc'] ?? map['havebookclubor'] ?? map['havebookclub']),
+    havePaperback: toBool(map['havepaperback']),
+    haveOther: toBool(map['haveotheredition'] ?? map['haveother']),
+    tellSigns,
+    note: (map['notes'] || '').toString().trim() || null,
+    coverUrl: (map['coverurl'] || '').toString().trim() || null
+  };
+}
+
+function computeFlags(b){
+  return {
+    first: b.haveFirst,
+    club: b.haveClub,
+    paperback: b.havePaperback,
+    other: b.haveOther,
+    wishlist: !(b.haveFirst || b.haveClub || b.havePaperback || b.haveOther)
+  };
+}
+
+function computeStats(){
+  const total = BOOKS.length;
+  const firsts = BOOKS.filter(b=>b.haveFirst).length;
+  const ownedAny = BOOKS.filter(b=>b.haveFirst||b.haveClub||b.havePaperback||b.haveOther).length;
+  const bachman = BOOKS.filter(b=>b.isBachman).length;
+  const wishlist = BOOKS.filter(b=>computeFlags(b).wishlist).length;
+  return [
+    {n: total, l:'Titles Tracked'},
+    {n: firsts, l:'True Firsts Owned'},
+    {n: ownedAny, l:'Total Owned'},
+    {n: bachman, l:'Bachman Titles'},
+    {n: wishlist, l:'On The Hunt'},
+  ];
+}
+
+function renderStats(){
+  document.getElementById('statsStrip').innerHTML = computeStats().map(s=>`
+    <div class="stat"><span class="stat-num">${s.n}</span><span class="stat-label">${s.l}</span></div>
+  `).join('');
+  document.getElementById('caseNumber').textContent = `CASE FILE NO. SK-1974–PRESENT · ${BOOKS.length} ENTRIES`;
+}
+
+function matches(b){
+  const flags = computeFlags(b);
+  if(filterStatus !== 'all' && !flags[filterStatus]) return false;
+  if(bachmanOnly && !b.isBachman) return false;
+  if(searchTerm && !b.title.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+  return true;
+}
+
+function decadeOf(year){ return Math.floor(year/10)*10; }
+function escAttr(s){ return (s||'').replace(/"/g,'&quot;'); }
+
+function cardHtml(b){
+  const flags = computeFlags(b);
+  const stamps = Object.keys(flags).filter(k=>flags[k]).map(k=>`<span class="stamp ${STATUS_META[k].cls}">${STATUS_META[k].label}</span>`).join('');
+  const tells = b.tellSigns.map(t=>`<div>${t.replace(/</g,'&lt;')}</div>`).join('');
+  return `
+  <div class="card">
+    <div class="card-head"><span></span><span class="card-year">${b.year ?? ''}</span></div>
+    <div class="card-title">${b.title}</div>
+    ${b.isBachman ? `<div class="bachman-tag">writing as Richard Bachman</div>` : ''}
+    <div class="stamp-row">${stamps}</div>
+    ${b.note ? `<div class="note-tag">Note: ${b.note}</div>` : ''}
+    <div class="cover-zone">
+      <div class="cover-box">
+        ${b.coverUrl ? `<img src="${escAttr(b.coverUrl)}" alt="${escAttr(b.title)} cover" onerror="this.parentElement.innerHTML='<span class=&quot;plus&quot;>IMAGE<br>NOT FOUND</span>'">` : `<span class="plus">NO COVER<br>LINKED</span>`}
+      </div>
+    </div>
+    ${tells ? `
+      <button class="evidence-toggle" data-action="toggle-evidence">Show 1st-Edition Tells ▾</button>
+      <div class="evidence-block" data-evidence>${tells}</div>
+    ` : ''}
+  </div>`;
+}
+
+function renderArchive(){
+  const el = document.getElementById('archive');
+  let list = BOOKS.filter(matches);
+
+  if(list.length === 0){
+    el.innerHTML = `<div class="empty-state">No entries match that search or filter.</div>`;
+    return;
+  }
+
+  if(sortMode === 'alpha'){
+    list = [...list].sort((a,b)=>a.title.localeCompare(b.title));
+    el.innerHTML = `<div class="grid">${list.map(cardHtml).join('')}</div>`;
+  } else {
+    list = [...list].filter(b=>b.year).sort((a,b)=>a.year-b.year);
+    const groups = {};
+    list.forEach(b=>{
+      const d = decadeOf(b.year);
+      if(!groups[d]) groups[d] = [];
+      groups[d].push(b);
+    });
+    const decades = Object.keys(groups).sort((a,b)=>a-b);
+    el.innerHTML = decades.map(d => `
+      <div class="decade-tab">
+        <div class="label">${d}s</div>
+        <div class="rule"></div>
+        <div class="decade-count">${groups[d].length} title${groups[d].length>1?'s':''}</div>
+      </div>
+      <div class="grid">${groups[d].map(cardHtml).join('')}</div>
+    `).join('');
+  }
+
+  document.querySelectorAll('[data-action="toggle-evidence"]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const block = btn.nextElementSibling;
+      const isOpen = block.classList.toggle('open');
+      btn.textContent = isOpen ? 'Hide 1st-Edition Tells ▴' : 'Show 1st-Edition Tells ▾';
+    });
+  });
+}
+
+/* ---------- Sheet loading ---------- */
+function cacheBust(url){
+  const sep = url.includes('?') ? '&' : '?';
+  return `${url}${sep}_cb=${Date.now()}`;
+}
+
+async function loadFromSheet(url){
+  return new Promise((resolve, reject)=>{
+    Papa.parse(cacheBust(url), {
+      download:true,
+      header:true,
+      skipEmptyLines:true,
+      complete: (results)=>{
+        if(!results.data || results.data.length === 0){ reject(new Error('empty')); return; }
+        const books = results.data.map(mapRowToBook).filter(Boolean);
+        if(books.length === 0){ reject(new Error('no rows parsed')); return; }
+        resolve(books);
+      },
+      error: (err)=>reject(err)
+    });
+  });
+}
+
+async function initData(){
+  const savedUrl = localStorage.getItem(STORAGE_KEY);
+  const sourceNote = document.getElementById('sourceNote');
+  const footerHint = document.getElementById('footerHint');
+  if(savedUrl){
+    try{
+      BOOKS = await loadFromSheet(savedUrl);
+      sourceNote.textContent = 'Connected to your Google Sheet — live data.';
+      footerHint.innerHTML = `Connected. <a href="#" id="disconnectLink" style="color:var(--gold)">Disconnect</a>`;
+      document.getElementById('disconnectLink')?.addEventListener('click', (e)=>{
+        e.preventDefault();
+        localStorage.removeItem(STORAGE_KEY);
+        location.reload();
+      });
+    }catch(e){
+      console.error(e);
+      BOOKS = DEFAULT_BOOKS;
+      sourceNote.textContent = 'Could not load your sheet — showing starter data instead.';
+    }
+  } else {
+    BOOKS = DEFAULT_BOOKS;
+  }
+  renderStats();
+  renderArchive();
+}
+
+/* ---------- controls ---------- */
+document.getElementById('chipRow').addEventListener('click', (e)=>{
+  const chip = e.target.closest('.chip');
+  if(!chip) return;
+  if(chip.dataset.bachman){
+    bachmanOnly = !bachmanOnly;
+    chip.classList.toggle('active', bachmanOnly);
+  } else {
+    filterStatus = chip.dataset.filter;
+    document.querySelectorAll('.chip[data-filter]').forEach(c=>c.classList.toggle('active', c===chip));
+  }
+  renderArchive();
+});
+document.getElementById('searchInput').addEventListener('input', (e)=>{
+  searchTerm = e.target.value; renderArchive();
+});
+document.getElementById('sortSelect').addEventListener('change', (e)=>{
+  sortMode = e.target.value; renderArchive();
+});
+document.getElementById('refreshBtn').addEventListener('click', ()=> initData());
+
+/* ---------- settings modal ---------- */
+const overlay = document.getElementById('modalOverlay');
+const urlInput = document.getElementById('sheetUrlInput');
+const modalError = document.getElementById('modalError');
+
+document.getElementById('settingsBtn').addEventListener('click', ()=>{
+  urlInput.value = localStorage.getItem(STORAGE_KEY) || '';
+  modalError.classList.remove('show');
+  overlay.classList.add('open');
+});
+document.getElementById('modalCancel').addEventListener('click', ()=> overlay.classList.remove('open'));
+document.getElementById('modalClear').addEventListener('click', ()=>{
+  localStorage.removeItem(STORAGE_KEY);
+  overlay.classList.remove('open');
+  initData();
+});
+document.getElementById('modalSave').addEventListener('click', async ()=>{
+  const url = urlInput.value.trim();
+  if(!url){ return; }
+  modalError.classList.remove('show');
+  try{
+    const books = await loadFromSheet(url);
+    BOOKS = books;
+    localStorage.setItem(STORAGE_KEY, url);
+    overlay.classList.remove('open');
+    renderStats();
+    renderArchive();
+    document.getElementById('sourceNote').textContent = 'Connected to your Google Sheet — live data.';
+  }catch(e){
+    modalError.classList.add('show');
+  }
+});
+
+initData();
+</script>
+</body>
+</html>
