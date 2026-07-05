@@ -217,7 +217,7 @@ footer{text-align:center; padding:40px 24px 60px; font-family:'Courier Prime', m
     <input type="text" id="editCondition" placeholder="e.g., Near Fine (FN)">
     
     <label>Est. Value / Price</label>
-    <input type="number" id="editPrice" placeholder="e.g., 45.00">
+    <input type="text" id="editPrice" placeholder="e.g., $700 - $1200">
     
     <label>Acquisition Notes & Details</label>
     <input type="text" id="editNotes" placeholder="Where did you find it?">
@@ -254,7 +254,7 @@ function mapRowToBook(row, idx){
     id: 'r' + idx, title, isBachman: toBool(map['bachman']), year: parseInt(map['year'], 10)||null,
     firstCount: toCount(map['havefirstedition']), clubCount: toCount(map['havebookcluborhc'] ?? map['havebookclub']),
     paperbackCount: toCount(map['havepaperback']), otherCount: toCount(map['haveotheredition']),
-    price: parseFloat((map['price']||'').toString().replace(/[$,]/g,'')) || null,
+    price: (map['price']||'').toString().trim() || null,
     condition: (map['condition']||'').toString().trim()||null, tellSigns,
     note: (map['notes']||'').toString().trim()||null, coverUrl: (map['coverurl']||'').toString().trim()||null
   };
@@ -284,7 +284,7 @@ function cardHtml(b){
     ${b.isBachman ? `<div class="bachman-tag">writing as Richard Bachman</div>` : ''}
     <div class="stamp-row">${stamps}</div>
     ${b.condition ? `<div class="grade-tag">Grade: ${b.condition}</div>` : ''}
-    ${b.price ? `<div class="note-tag">Value: $${b.price.toLocaleString(undefined,{maximumFractionDigits:2})}</div>` : ''}
+    ${b.price ? \Value: ${b.price}` : ''}`
     ${b.note ? `<div class="note-tag">Note: ${b.note}</div>` : ''}
     <div class="cover-zone">
       <div class="cover-box">${b.coverUrl ? `<img src="${b.coverUrl}">` : `<span style="font-size:10px; color:var(--manila-dark);">NO COVER</span>`}</div>
