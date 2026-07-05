@@ -276,7 +276,7 @@ footer a{color:var(--gold);}
   <button class="settings-btn" id="settingsBtn">⚙ Connect Sheet</button>
   <div class="eyebrow">Collector's Corner</div>
   <h1 class="title">THE KING<br><em>Archive</em></h1>
-  <p class="subtitle">A updated book shelf to first-edition Stephen King — every title, every tell-tale sign, one shelf at a time.</p>
+  <p class="subtitle">A guide to first-edition Stephen King — every title, every tell-tale sign, one shelf at a time.</p>
   <div class="case-number" id="caseNumber">CASE FILE NO. SK-1974–PRESENT</div>
   <div class="data-source-note" id="sourceNote">Showing built-in starter data — connect your Google Sheet to make this fully yours.</div>
 
@@ -646,7 +646,9 @@ document.getElementById('settingsBtn').addEventListener('click', ()=>{
   const conn = getConnection();
   urlInput.value = '';
   tabInput.value = conn && conn.tab ? conn.tab : '';
-  csvInput.value = conn && conn.mode === 'csv' ? conn.url : '';
+  csvInput.value = '';
+  csvInput.style.display = 'none';
+  advancedToggle.textContent = 'Have a published CSV link instead? Use that.';
   modalError.classList.remove('show');
   overlay.classList.add('open');
 });
@@ -665,15 +667,20 @@ advancedToggle.addEventListener('click', (e)=>{
 
 document.getElementById('modalSave').addEventListener('click', async ()=>{
   modalError.classList.remove('show');
+  const sheetUrl = urlInput.value.trim();
   const csvUrl = csvInput.value.trim();
   let conn = null;
 
-  if(csvUrl){
-    conn = {mode:'csv', url: csvUrl};
-  } else {
-    const id = extractSheetId(urlInput.value);
+  if(sheetUrl){
+    const id = extractSheetId(sheetUrl);
     if(!id){ modalError.textContent = "Couldn't find a sheet ID in that link — paste the full URL from your browser's address bar."; modalError.classList.add('show'); return; }
     conn = {mode:'opensheet', id, tab: tabInput.value.trim() || 'Sheet1'};
+  } else if(csvUrl){
+    conn = {mode:'csv', url: csvUrl};
+  } else {
+    modalError.textContent = "Paste your sheet's URL above first.";
+    modalError.classList.add('show');
+    return;
   }
 
   try{
@@ -692,7 +699,15 @@ document.getElementById('modalSave').addEventListener('click', async ()=>{
     });
   }catch(e){
     console.error(e);
-    modalError.textContent = "Couldn't load that sheet. Double-check sharing is set to \"Anyone with the link\" and the tab name is exactly right (case-sensitive).";
+    let msg = "Couldn't load that sheet. Double-check sharing is set to \"Anyone with the link\" and the tab name is exactly right (case-sensitive).";
+    if(e.message === 'no rows parsed'){
+      msg = "Connected, but no rows had a value in the Title column — check your sheet has data below the header row.";
+    } else if(e.message === 'empty sheet' || e.message === 'empty'){
+      msg = "That tab loaded but appears empty. Check the tab name matches exactly (case-sensitive, no extra spaces).";
+    } else if(e.message === 'opensheet request failed'){
+      msg = "Couldn't reach that sheet. Make sure sharing is set to \"Anyone with the link\" (not \"Restricted\").";
+    }
+    modalError.textContent = msg;
     modalError.classList.add('show');
   }
 });
