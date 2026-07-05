@@ -284,7 +284,7 @@ function cardHtml(b){
     ${b.isBachman ? `<div class="bachman-tag">writing as Richard Bachman</div>` : ''}
     <div class="stamp-row">${stamps}</div>
     ${b.condition ? `<div class="grade-tag">Grade: ${b.condition}</div>` : ''}
-    ${b.price ? \Value: ${b.price}` : ''}`
+    ${b.price ? `<div class="note-tag">Value: ${b.price}</div>` : ''}
     ${b.note ? `<div class="note-tag">Note: ${b.note}</div>` : ''}
     <div class="cover-zone">
       <div class="cover-box">${b.coverUrl ? `<img src="${b.coverUrl}">` : `<span style="font-size:10px; color:var(--manila-dark);">NO COVER</span>`}</div>
